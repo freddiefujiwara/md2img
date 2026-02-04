@@ -6,6 +6,8 @@ import { marked } from "marked";
 
 import html2canvas from "html2canvas";
 
+import { paginateHtml } from "./lib/pagination";
+
 
 
 const presets = {
@@ -128,34 +130,6 @@ width: `${p.w}px`,
 
 
 
-// markedの出力HTMLを「直下ブロック」単位で分解して積む（安定）
-
-function splitIntoBlocks(html) {
-
-  const tmp = document.createElement("div");
-
-  tmp.innerHTML = html;
-
-  const blocks = [];
-
-  for (const node of tmp.childNodes) {
-
-    if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) continue;
-
-    const wrap = document.createElement("div");
-
-    wrap.appendChild(node.cloneNode(true));
-
-    blocks.push(wrap.innerHTML);
-
-  }
-
-  return blocks;
-
-}
-
-
-
 async function paginate() {
 
   await nextTick();
@@ -167,70 +141,22 @@ async function paginate() {
   if (!wrap || !content) return;
 
 
-
-  const blocks = splitIntoBlocks(fullHtml.value);
-
   const p = getPreset();
 
   const maxHeight = p.h;
 
 
-
-  const pages = [];
-
-  let current = "";
-
-
-
-  content.innerHTML = "";
-
-  for (let i = 0; i < blocks.length; i++) {
-
-    const candidate = current + blocks[i];
-
+  const measure = (candidate) => {
     content.innerHTML = `<div class="md-body">${candidate}</div>`;
+    return content.scrollHeight;
+  };
 
-
-
-    // 溢れたら前のcurrentを確定
-
-    if (content.scrollHeight > maxHeight) {
-
-      if (!current) {
-
-        // 1ブロックだけで溢れる場合：そのまま1ページ扱い（はみ出す可能性あり）
-
-        // ※必要なら後で「そのブロック内をさらに分割」も可能
-
-        pages.push(blocks[i]);
-
-        current = "";
-
-        content.innerHTML = "";
-
-      } else {
-
-        pages.push(current);
-
-        current = blocks[i];
-
-        content.innerHTML = `<div class="md-body">${current}</div>`;
-
-      }
-
-    } else {
-
-      current = candidate;
-
-    }
-
-  }
-
-
-
-  if (current) pages.push(current);
-
-  pagesHtml.value = pages.length ? pages : [fullHtml.value];
+  pagesHtml.value = paginateHtml({
+    html: fullHtml.value,
+    maxHeight,
+    measure,
+    doc: document,
+  });
 
 }
 
