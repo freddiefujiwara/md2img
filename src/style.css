@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Markdownの見た目（軽量・SNS向け） */
+.md-body {
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.md-body h1 { font-size: 1.55em; font-weight: 800; margin: 0.7em 0 0.45em; }
+.md-body h2 { font-size: 1.25em; font-weight: 800; margin: 0.8em 0 0.45em; }
+.md-body h3 { font-size: 1.10em; font-weight: 800; margin: 0.75em 0 0.35em; }
+
+.md-body p  { margin: 0.55em 0; }
+.md-body ul { padding-left: 1.25em; list-style: disc; margin: 0.55em 0; }
+.md-body ol { padding-left: 1.25em; list-style: decimal; margin: 0.55em 0; }
+
+.md-body code {
+  padding: 0.12em 0.35em;
+  border-radius: 0.4em;
+  background: rgba(0,0,0,0.06);
+}
+
+.md-body pre {
+  padding: 0.85em;
+  border-radius: 0.8em;
+  background: rgba(0,0,0,0.06);
+  overflow: auto;
+}
+
+.md-body blockquote {
+  border-left: 4px solid rgba(0,0,0,0.15);
+  padding-left: 0.8em;
+  color: rgba(0,0,0,0.78);
+  margin: 0.7em 0;
+}
+
+.md-body a { text-decoration: underline; }
