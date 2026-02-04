@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
