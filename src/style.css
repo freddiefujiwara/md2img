@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+body {
+  overflow-x: hidden;
+}
+
 /* Markdown styles (lightweight, for social posts) */
 .md-body {
   line-height: inherit;
