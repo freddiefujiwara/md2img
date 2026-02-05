@@ -87,17 +87,17 @@ async function exportAllPng() {
 
     const files = [];
 
+    const captureNode = pageCaptureRef.value;
+    if (!captureNode) return;
+
     // Capture each page.
     for (let i = 0; i < pagesHtml.value.length; i++) {
       await nextTick();
 
-      const node = pageCaptureRef.value;
-      if (!node) return;
-
       // Swap page HTML.
-      node.querySelector(".md-body").innerHTML = pagesHtml.value[i];
+      captureNode.querySelector(".md-body").innerHTML = pagesHtml.value[i];
 
-      const canvas = await html2canvas(node, {
+      const canvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale,
         useCORS: true,
@@ -155,6 +155,23 @@ async function exportAllPng() {
     if (node) node.querySelector(".md-body").innerHTML = pagesHtml.value[0] || fullHtml.value;
   }
 }
+
+defineExpose(
+  import.meta.env.MODE === "test"
+    ? {
+        paginate,
+        exportAllPng,
+        setPageCaptureNode: (node) => {
+          pageCaptureRef.value = node;
+        },
+        measureWrapRef,
+        measureContentRef,
+        pageCaptureRef,
+        pagesHtml,
+        fullHtml,
+      }
+    : {}
+);
 
 onMounted(() => {
   paginate();
