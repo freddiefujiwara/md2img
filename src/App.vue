@@ -113,11 +113,6 @@ async function exportAllPng() {
       files.push({ blob, filename });
     }
 
-    if (files.length === 1) {
-      downloadBlob(files[0].blob, files[0].filename);
-      return;
-    }
-
     const isMobileDevice =
       typeof navigator !== "undefined" &&
       /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
@@ -142,6 +137,11 @@ async function exportAllPng() {
           // Fall back to sequential downloads if sharing is dismissed or fails.
         }
       }
+    }
+
+    if (files.length === 1) {
+      downloadBlob(files[0].blob, files[0].filename);
+      return;
     }
 
     for (const { blob, filename } of files) {
