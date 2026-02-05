@@ -118,7 +118,11 @@ async function exportAllPng() {
       return;
     }
 
+    const isMobileDevice =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
     const canShare =
+      isMobileDevice &&
       typeof navigator !== "undefined" &&
       typeof navigator.canShare === "function" &&
       typeof navigator.share === "function";
