@@ -111,7 +111,7 @@ describe("EditorView", () => {
   });
 
   it("hydrates markdown from the encoded route", async () => {
-    const { app } = await mountApp("/%E3%83%86%E3%82%B9%E3%83%88");
+    const { app } = await mountApp("/mMMk6GQTDEA");
     await waitForPaginate();
 
     const textarea = container.querySelector("textarea");
@@ -137,7 +137,7 @@ describe("EditorView", () => {
     vi.runAllTimers();
     await nextTick();
 
-    expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
+    expect(replaceSpy).toHaveBeenCalledWith({ path: "/MoCwhgTgpgBAtlIA" });
     app.unmount();
     vi.useRealTimers();
   });
@@ -146,7 +146,7 @@ describe("EditorView", () => {
     const { app, router } = await mountApp();
     await waitForPaginate();
 
-    await router.push("/%E6%96%87%E5%AD%97");
+    await router.push("/uGmnVtI");
     await nextTick();
 
     const textarea = container.querySelector("textarea");
