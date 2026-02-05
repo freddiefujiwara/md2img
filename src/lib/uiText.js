@@ -7,7 +7,6 @@ export const uiText = {
   savingLabel: "Saving...",
   markdownLabel: "Markdown",
   clearMarkdownLabel: "Clear",
-  repaginateLabel: "Split again",
   previewLabel: "Preview (page 1)",
   pageCountLabel: (count) => `Total ${count} page${count === 1 ? "" : "s"}`,
   splitHint:
