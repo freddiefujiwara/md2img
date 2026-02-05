@@ -1,6 +1,7 @@
 import { createApp, nextTick } from "vue";
+import { createMemoryHistory, createRouter } from "vue-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./App.vue";
+import EditorView from "./views/EditorView.vue";
 import html2canvas from "html2canvas";
 import { marked } from "marked";
 import { paginateHtml } from "./lib/pagination";
@@ -24,7 +25,7 @@ const setNavigator = (overrides) => {
   });
 };
 
-describe("App", () => {
+describe("EditorView", () => {
   let originalNavigator;
   let container;
 
@@ -53,10 +54,20 @@ describe("App", () => {
     container.remove();
   });
 
-  const mountApp = () => {
-    const app = createApp(App);
+  const mountApp = async (initialPath = "/") => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/", component: EditorView },
+        { path: "/:encoded(.*)", component: EditorView },
+      ],
+    });
+    await router.push(initialPath);
+    await router.isReady();
+    const app = createApp(EditorView);
+    app.use(router);
     const vm = app.mount(container);
-    return { app, vm };
+    return { app, vm, router };
   };
 
   const waitForPaginate = async () => {
@@ -67,7 +78,7 @@ describe("App", () => {
   it("renders header text and page count", async () => {
     paginateHtml.mockReturnValue(["<p>A</p>", "<p>B</p>"]);
 
-    const { app } = mountApp();
+    const { app } = await mountApp();
     await waitForPaginate();
 
     expect(container.textContent).toContain(uiText.previewLabel);
@@ -78,7 +89,7 @@ describe("App", () => {
 
   it("debounces pagination when markdown changes", async () => {
     vi.useFakeTimers();
-    const { app } = mountApp();
+    const { app } = await mountApp();
     await waitForPaginate();
 
     paginateHtml.mockClear();
@@ -95,8 +106,44 @@ describe("App", () => {
     vi.useRealTimers();
   });
 
+  it("hydrates markdown from the encoded route", async () => {
+    const { app } = await mountApp("/%E3%83%86%E3%82%B9%E3%83%88");
+    await waitForPaginate();
+
+    const textarea = container.querySelector("textarea");
+    expect(textarea.value).toBe("テスト");
+
+    app.unmount();
+  });
+
+  it("replaces the route when markdown input updates", async () => {
+    const { app, router } = await mountApp();
+    await waitForPaginate();
+
+    const textarea = container.querySelector("textarea");
+    textarea.value = "Share me";
+    textarea.dispatchEvent(new Event("input"));
+    await nextTick();
+
+    expect(router.currentRoute.value.path).toBe("/Share%20me");
+    app.unmount();
+  });
+
+  it("syncs textarea when the route changes", async () => {
+    const { app, router } = await mountApp();
+    await waitForPaginate();
+
+    await router.push("/%E6%96%87%E5%AD%97");
+    await nextTick();
+
+    const textarea = container.querySelector("textarea");
+    expect(textarea.value).toBe("文字");
+
+    app.unmount();
+  });
+
   it("returns early when measurement refs are missing", async () => {
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     paginateHtml.mockClear();
@@ -120,7 +167,7 @@ describe("App", () => {
 
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     await vm.exportAllPng();
@@ -150,7 +197,7 @@ describe("App", () => {
 
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     await vm.exportAllPng();
@@ -174,7 +221,7 @@ describe("App", () => {
 
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     await vm.exportAllPng();
@@ -191,7 +238,7 @@ describe("App", () => {
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:mock");
 
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     await vm.exportAllPng();
@@ -202,7 +249,7 @@ describe("App", () => {
 
   it("exits export early when the capture node is missing", async () => {
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     vm.$.exposed.setPageCaptureNode(null);
@@ -214,7 +261,7 @@ describe("App", () => {
 
   it("resets to full HTML when no pages are available", async () => {
     paginateHtml.mockReturnValue([]);
-    const { app, vm } = mountApp();
+    const { app, vm } = await mountApp();
     await waitForPaginate();
 
     vm.pagesHtml = [];
