@@ -76,6 +76,17 @@ async function exportAllPng() {
     const preset = activePreset.value.preset;
     const scale = 2;
 
+    const downloadBlob = (blob, filename) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    const files = [];
+
     // Capture each page.
     for (let i = 0; i < pagesHtml.value.length; i++) {
       await nextTick();
@@ -92,11 +103,45 @@ async function exportAllPng() {
         useCORS: true,
       });
 
-      const url = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `md_${activePreset.value.key}_${preset.width}x${preset.height}_p${String(i + 1).padStart(2, "0")}.png`;
-      a.click();
+      const filename = `md_${activePreset.value.key}_${preset.width}x${preset.height}_p${String(i + 1).padStart(2, "0")}.png`;
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob((result) => resolve(result), "image/png");
+      });
+
+      if (!blob) continue;
+
+      files.push({ blob, filename });
+    }
+
+    if (files.length === 1) {
+      downloadBlob(files[0].blob, files[0].filename);
+      return;
+    }
+
+    const canShare =
+      typeof navigator !== "undefined" &&
+      typeof navigator.canShare === "function" &&
+      typeof navigator.share === "function";
+
+    if (canShare) {
+      const shareFiles = files.map(
+        ({ blob, filename }) => new File([blob], filename, { type: "image/png" })
+      );
+      if (navigator.canShare({ files: shareFiles })) {
+        try {
+          await navigator.share({
+            files: shareFiles,
+            title: "Markdown to Image",
+          });
+          return;
+        } catch (error) {
+          // Fall back to sequential downloads if sharing is dismissed or fails.
+        }
+      }
+    }
+
+    for (const { blob, filename } of files) {
+      downloadBlob(blob, filename);
     }
   } finally {
     exporting.value = false;
