@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var segmentCount = 1;
+        var location = window.location;
+        var basePath = location.pathname
+          .split("/")
+          .slice(0, 1 + segmentCount)
+          .join("/");
+        var redirectPath = location.pathname
+          .split("/")
+          .slice(1 + segmentCount)
+          .join("/");
+        var redirectUrl =
+          location.protocol +
+          "//" +
+          location.host +
+          basePath +
+          "/?/" +
+          redirectPath +
+          (location.search ? "&" + location.search.slice(1) : "") +
+          location.hash;
+        location.replace(redirectUrl);
+      })();
+    </script>
+  </body>
+</html>
