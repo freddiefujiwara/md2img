@@ -59,11 +59,16 @@ describe("App", () => {
     return { app, vm };
   };
 
+  const waitForPaginate = async () => {
+    await nextTick();
+    await nextTick();
+  };
+
   it("renders header text and page count", async () => {
     paginateHtml.mockReturnValue(["<p>A</p>", "<p>B</p>"]);
 
     const { app } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     expect(container.textContent).toContain(uiText.previewLabel);
     expect(container.textContent).toContain(uiText.pageCountLabel(2));
@@ -74,7 +79,7 @@ describe("App", () => {
   it("debounces pagination when markdown changes", async () => {
     vi.useFakeTimers();
     const { app } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     paginateHtml.mockClear();
     const textarea = container.querySelector("textarea");
@@ -92,7 +97,7 @@ describe("App", () => {
 
   it("returns early when measurement refs are missing", async () => {
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     paginateHtml.mockClear();
     vm.measureWrapRef = null;
@@ -116,7 +121,7 @@ describe("App", () => {
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     await vm.exportAllPng();
 
@@ -146,7 +151,7 @@ describe("App", () => {
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     await vm.exportAllPng();
 
@@ -170,7 +175,7 @@ describe("App", () => {
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
 
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     await vm.exportAllPng();
 
@@ -187,7 +192,7 @@ describe("App", () => {
       .mockReturnValue("blob:mock");
 
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     await vm.exportAllPng();
 
@@ -198,7 +203,7 @@ describe("App", () => {
   it("exits export early when the capture node is missing", async () => {
     html2canvas.mockResolvedValue(createCanvas(new Blob(["data"], { type: "image/png" })));
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     vm.pageCaptureRef = null;
     await vm.exportAllPng();
@@ -210,7 +215,7 @@ describe("App", () => {
   it("resets to full HTML when no pages are available", async () => {
     paginateHtml.mockReturnValue([]);
     const { app, vm } = mountApp();
-    await nextTick();
+    await waitForPaginate();
 
     vm.pagesHtml = [];
     await vm.exportAllPng();

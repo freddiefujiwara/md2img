@@ -156,6 +156,20 @@ async function exportAllPng() {
   }
 }
 
+defineExpose(
+  import.meta.env.MODE === "test"
+    ? {
+        paginate,
+        exportAllPng,
+        measureWrapRef,
+        measureContentRef,
+        pageCaptureRef,
+        pagesHtml,
+        fullHtml,
+      }
+    : {}
+);
+
 onMounted(() => {
   paginate();
 });
