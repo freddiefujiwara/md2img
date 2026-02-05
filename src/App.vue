@@ -76,6 +76,17 @@ async function exportAllPng() {
     const preset = activePreset.value.preset;
     const scale = 2;
 
+    const downloadBlob = (blob, filename) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    const files = [];
+
     // Capture each page.
     for (let i = 0; i < pagesHtml.value.length; i++) {
       await nextTick();
@@ -92,11 +103,49 @@ async function exportAllPng() {
         useCORS: true,
       });
 
-      const url = canvas.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `md_${activePreset.value.key}_${preset.width}x${preset.height}_p${String(i + 1).padStart(2, "0")}.png`;
-      a.click();
+      const filename = `md_${activePreset.value.key}_${preset.width}x${preset.height}_p${String(i + 1).padStart(2, "0")}.png`;
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob((result) => resolve(result), "image/png");
+      });
+
+      if (!blob) continue;
+
+      files.push({ blob, filename });
+    }
+
+    const isMobileDevice =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
+    const canShare =
+      isMobileDevice &&
+      typeof navigator !== "undefined" &&
+      typeof navigator.canShare === "function" &&
+      typeof navigator.share === "function";
+
+    if (canShare) {
+      const shareFiles = files.map(
+        ({ blob, filename }) => new File([blob], filename, { type: "image/png" })
+      );
+      if (navigator.canShare({ files: shareFiles })) {
+        try {
+          await navigator.share({
+            files: shareFiles,
+            title: "Markdown to Image",
+          });
+          return;
+        } catch (error) {
+          // Fall back to sequential downloads if sharing is dismissed or fails.
+        }
+      }
+    }
+
+    if (files.length === 1) {
+      downloadBlob(files[0].blob, files[0].filename);
+      return;
+    }
+
+    for (const { blob, filename } of files) {
+      downloadBlob(blob, filename);
     }
   } finally {
     exporting.value = false;
@@ -170,14 +219,22 @@ onMounted(() => {
       </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-3 min-w-0">
       <!-- Editor -->
-      <section class="bg-white rounded-2xl border overflow-hidden">
+      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
         <div class="px-4 py-2 border-b text-sm font-semibold flex items-center justify-between">
           <span>{{ uiText.markdownLabel }}</span>
-          <button class="text-xs px-2 py-1 rounded border" @click="paginate">
-            {{ uiText.repaginateLabel }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              class="text-xs px-2 py-1 rounded border"
+              @click="markdownInput = ''; schedulePaginate()"
+            >
+              {{ uiText.clearMarkdownLabel }}
+            </button>
+            <button class="text-xs px-2 py-1 rounded border" @click="paginate">
+              {{ uiText.repaginateLabel }}
+            </button>
+          </div>
         </div>
         <textarea
           v-model="markdownInput"
@@ -187,7 +244,7 @@ onMounted(() => {
       </section>
 
       <!-- Preview -->
-      <section class="bg-white rounded-2xl border overflow-hidden">
+      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
         <div class="px-4 py-2 border-b text-sm font-semibold">
           {{ uiText.previewLabel }} / {{ uiText.pageCountLabel(pagesHtml.length) }}
         </div>

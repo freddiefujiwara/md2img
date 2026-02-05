@@ -7,15 +7,9 @@ export const imagePresets = {
 
 export const textColorPresets = [
   { label: "Black", value: "#0f172a" },
-  { label: "Dark Gray", value: "#334155" },
-  { label: "Navy", value: "#1e293b" },
-  { label: "Forest", value: "#14532d" },
   { label: "Maroon", value: "#7f1d1d" },
   { label: "White", value: "#f8fafc" },
-  { label: "Light Gray", value: "#e2e8f0" },
-  { label: "Light Blue", value: "#dbeafe" },
   { label: "Light Green", value: "#dcfce7" },
-  { label: "Light Yellow", value: "#fef9c3" },
 ];
 
 export function resolvePreset(presets, key, fallbackKey) {
