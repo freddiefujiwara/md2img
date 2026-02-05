@@ -205,11 +205,7 @@ describe("App", () => {
     const { app, vm } = mountApp();
     await waitForPaginate();
 
-    Object.defineProperty(vm.pageCaptureRef, "value", {
-      configurable: true,
-      get: () => null,
-      set: () => {},
-    });
+    vm.$.setupState.pageCaptureRef.value = null;
     await vm.exportAllPng();
 
     expect(html2canvas).not.toHaveBeenCalled();
