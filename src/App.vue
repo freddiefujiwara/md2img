@@ -4,38 +4,23 @@ import { marked } from "marked";
 import html2canvas from "html2canvas";
 
 import { paginateHtml } from "./lib/pagination";
-
-const presets = {
-  x: { label: "X (1200×675)", w: 1200, h: 675 },
-  ig_post: { label: "Instagram 投稿 (1080×1080)", w: 1080, h: 1080 },
-  ig_story: { label: "Instagram ストーリーズ (1080×1920)", w: 1080, h: 1920 },
-  fb: { label: "Facebook (1200×630)", w: 1200, h: 630 },
-};
+import { imagePresets, resolvePreset, textColorPresets } from "./lib/presets";
+import { buildPageStyle } from "./lib/style";
+import { createDebounce } from "./lib/timing";
+import { sampleMarkdown } from "./lib/sampleMarkdown";
+import { uiText } from "./lib/uiText";
 
 const presetKey = ref("x");
 
-// Default text size for SNS.
-const bg = ref("#ffffff");
+const backgroundColor = ref("#ffffff");
+const textColor = ref(textColorPresets[0].value);
 const fontSize = ref(22);
 const lineHeight = ref(1.55);
 const padding = ref(52);
 
-// Sample text for the first page.
-const md = ref(`# タイトル（要約）
-    ここに要点を短く書きます。続きは画像本文。
+const markdownInput = ref(sampleMarkdown);
 
-    ---
-
-## 本文
-    Xの255文字制限を超える長文を、Markdownから画像にして投稿します。
-
-    - 自動で複数枚に分割
-    - 画像は高解像度で保存（scale:2）
-    - スマホでも操作しやすい
-
-段落を増やすとページが増えます。`.repeat(6));
-
-const fullHtml = computed(() => marked.parse(md.value));
+const fullHtml = computed(() => marked.parse(markdownInput.value));
 const pagesHtml = ref([]); // HTML for each page.
 
 const exporting = ref(false);
@@ -47,23 +32,17 @@ const measureContentRef = ref(null);
 // Visible DOM for capture.
 const pageCaptureRef = ref(null);
 
-function getPreset() {
-  return presets[presetKey.value];
-}
-
-function pageStyle() {
-  const p = getPreset();
-  return {
-    width: `${p.w}px`,
-    height: `${p.h}px`,
-    background: bg.value,
-    fontSize: `${fontSize.value}px`,
-    lineHeight: String(lineHeight.value),
-    padding: `${padding.value}px`,
-    fontFamily:
-      "system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif",
-  };
-}
+const activePreset = computed(() => resolvePreset(imagePresets, presetKey.value, "x"));
+const pageStyle = computed(() =>
+  buildPageStyle({
+    preset: activePreset.value.preset,
+    backgroundColor: backgroundColor.value,
+    textColor: textColor.value,
+    fontSize: fontSize.value,
+    lineHeight: lineHeight.value,
+    padding: padding.value,
+  })
+);
 
 async function paginate() {
   await nextTick();
@@ -71,8 +50,7 @@ async function paginate() {
   const content = measureContentRef.value;
   if (!wrap || !content) return;
 
-  const p = getPreset();
-  const maxHeight = p.h;
+  const maxHeight = activePreset.value.preset.height;
 
   const measure = (candidate) => {
     content.innerHTML = `<div class="md-body">${candidate}</div>`;
@@ -87,10 +65,7 @@ async function paginate() {
   });
 }
 
-function schedulePaginate() {
-  clearTimeout(schedulePaginate._t);
-  schedulePaginate._t = setTimeout(() => paginate(), 120);
-}
+const schedulePaginate = createDebounce(() => paginate(), 120);
 
 async function exportAllPng() {
   exporting.value = true;
@@ -98,7 +73,7 @@ async function exportAllPng() {
     // Wait for web fonts.
     if ("fonts" in document) await document.fonts.ready;
 
-    const p = getPreset();
+    const preset = activePreset.value.preset;
     const scale = 2;
 
     // Capture each page.
@@ -120,7 +95,7 @@ async function exportAllPng() {
       const url = canvas.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = url;
-      a.download = `md_${presetKey.value}_${p.w}x${p.h}_p${String(i + 1).padStart(2, "0")}.png`;
+      a.download = `md_${activePreset.value.key}_${preset.width}x${preset.height}_p${String(i + 1).padStart(2, "0")}.png`;
       a.click();
     }
   } finally {
@@ -143,25 +118,44 @@ onMounted(() => {
       <div class="max-w-6xl mx-auto px-3 py-2 flex flex-wrap gap-2 items-center">
         <div class="flex gap-2 flex-wrap">
           <button
-            v-for="(p, key) in presets"
+            v-for="(preset, key) in imagePresets"
             :key="key"
             class="px-3 py-2 rounded-lg text-sm border"
             :class="presetKey === key ? 'bg-slate-900 text-white border-slate-900' : 'bg-white'"
             @click="presetKey = key; schedulePaginate()"
           >
-            {{ p.label }}
+            {{ preset.label }}
           </button>
         </div>
 
         <div class="flex items-center gap-2 ml-auto flex-wrap">
-          <label class="text-xs text-slate-600">背景</label>
-          <input type="color" v-model="bg" class="h-9 w-10 rounded border" @input="schedulePaginate" />
+          <label class="text-xs text-slate-600">{{ uiText.backgroundLabel }}</label>
+          <input
+            type="color"
+            v-model="backgroundColor"
+            class="h-9 w-10 rounded border"
+            @input="schedulePaginate"
+          />
 
-          <label class="text-xs text-slate-600 ml-2">文字</label>
+          <label class="text-xs text-slate-600 ml-2">{{ uiText.textColorLabel }}</label>
+          <div class="flex gap-1">
+            <button
+              v-for="option in textColorPresets"
+              :key="option.value"
+              class="h-9 px-2 rounded-lg text-xs border flex items-center gap-2"
+              :class="textColor === option.value ? 'border-slate-900' : 'border-slate-200'"
+              @click="textColor = option.value; schedulePaginate()"
+            >
+              <span class="inline-block h-4 w-4 rounded-full border" :style="{ background: option.value }"></span>
+              {{ option.label }}
+            </button>
+          </div>
+
+          <label class="text-xs text-slate-600 ml-2">{{ uiText.textSizeLabel }}</label>
           <input type="range" min="16" max="30" step="1" v-model.number="fontSize" @input="schedulePaginate" />
           <span class="text-xs w-10 text-right">{{ fontSize }}px</span>
 
-          <label class="text-xs text-slate-600 ml-2">行間</label>
+          <label class="text-xs text-slate-600 ml-2">{{ uiText.lineHeightLabel }}</label>
           <input type="range" min="1.2" max="1.9" step="0.05" v-model.number="lineHeight" @input="schedulePaginate" />
           <span class="text-xs w-10 text-right">{{ lineHeight.toFixed(2) }}</span>
 
@@ -170,7 +164,7 @@ onMounted(() => {
             :disabled="exporting"
             @click="exportAllPng"
           >
-            {{ exporting ? "書き出し中…" : `PNG保存（全${pagesHtml.length}枚）` }}
+            {{ exporting ? uiText.savingLabel : `${uiText.savePngLabel} (${pagesHtml.length})` }}
           </button>
         </div>
       </div>
@@ -180,11 +174,13 @@ onMounted(() => {
       <!-- Editor -->
       <section class="bg-white rounded-2xl border overflow-hidden">
         <div class="px-4 py-2 border-b text-sm font-semibold flex items-center justify-between">
-          <span>Markdown</span>
-          <button class="text-xs px-2 py-1 rounded border" @click="paginate">再分割</button>
+          <span>{{ uiText.markdownLabel }}</span>
+          <button class="text-xs px-2 py-1 rounded border" @click="paginate">
+            {{ uiText.repaginateLabel }}
+          </button>
         </div>
         <textarea
-          v-model="md"
+          v-model="markdownInput"
           class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none"
           @input="schedulePaginate"
         />
@@ -193,7 +189,7 @@ onMounted(() => {
       <!-- Preview -->
       <section class="bg-white rounded-2xl border overflow-hidden">
         <div class="px-4 py-2 border-b text-sm font-semibold">
-          プレビュー（1枚目） / 全{{ pagesHtml.length }}枚
+          {{ uiText.previewLabel }} / {{ uiText.pageCountLabel(pagesHtml.length) }}
         </div>
 
         <div class="p-3 overflow-auto">
@@ -202,15 +198,14 @@ onMounted(() => {
             <div
               ref="pageCaptureRef"
               class="shadow-xl rounded-xl overflow-hidden"
-              :style="pageStyle()"
+              :style="pageStyle"
             >
               <div class="md-body" v-html="pagesHtml[0] || fullHtml"></div>
             </div>
           </div>
 
           <p class="mt-3 text-xs text-slate-500">
-            Split is done by blocks like paragraphs, headings, and lists. Very long blocks can still
-            overflow.
+            {{ uiText.splitHint }}
           </p>
         </div>
       </section>
@@ -218,7 +213,7 @@ onMounted(() => {
 
     <!-- Hidden area for measuring height. -->
     <div class="fixed -left-[99999px] top-0 opacity-0 pointer-events-none">
-      <div ref="measureWrapRef" class="overflow-hidden" :style="pageStyle()">
+      <div ref="measureWrapRef" class="overflow-hidden" :style="pageStyle">
         <div ref="measureContentRef"></div>
       </div>
     </div>
@@ -230,7 +225,7 @@ onMounted(() => {
         :disabled="exporting"
         @click="exportAllPng"
       >
-        {{ exporting ? "書き出し中…" : `PNG保存（全${pagesHtml.length}枚）` }}
+        {{ exporting ? uiText.savingLabel : `${uiText.savePngLabel} (${pagesHtml.length})` }}
       </button>
     </div>
     <div class="h-20 lg:hidden"></div>
