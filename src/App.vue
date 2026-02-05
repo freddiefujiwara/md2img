@@ -87,17 +87,17 @@ async function exportAllPng() {
 
     const files = [];
 
+    const captureNode = pageCaptureRef.value;
+    if (!captureNode) return;
+
     // Capture each page.
     for (let i = 0; i < pagesHtml.value.length; i++) {
       await nextTick();
 
-      const node = pageCaptureRef.value;
-      if (!node) return;
-
       // Swap page HTML.
-      node.querySelector(".md-body").innerHTML = pagesHtml.value[i];
+      captureNode.querySelector(".md-body").innerHTML = pagesHtml.value[i];
 
-      const canvas = await html2canvas(node, {
+      const canvas = await html2canvas(captureNode, {
         backgroundColor: null,
         scale,
         useCORS: true,
