@@ -161,6 +161,9 @@ defineExpose(
     ? {
         paginate,
         exportAllPng,
+        setPageCaptureNode: (node) => {
+          pageCaptureRef.value = node;
+        },
         measureWrapRef,
         measureContentRef,
         pageCaptureRef,

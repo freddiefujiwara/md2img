@@ -205,7 +205,7 @@ describe("App", () => {
     const { app, vm } = mountApp();
     await waitForPaginate();
 
-    vm.$.exposed.pageCaptureRef.value = null;
+    vm.$.exposed.setPageCaptureNode(null);
     await vm.exportAllPng();
 
     expect(html2canvas).not.toHaveBeenCalled();
