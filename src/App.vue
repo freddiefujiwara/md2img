@@ -170,9 +170,9 @@ onMounted(() => {
       </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-3 min-w-0">
       <!-- Editor -->
-      <section class="bg-white rounded-2xl border overflow-hidden">
+      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
         <div class="px-4 py-2 border-b text-sm font-semibold flex items-center justify-between">
           <span>{{ uiText.markdownLabel }}</span>
           <button class="text-xs px-2 py-1 rounded border" @click="paginate">
@@ -187,7 +187,7 @@ onMounted(() => {
       </section>
 
       <!-- Preview -->
-      <section class="bg-white rounded-2xl border overflow-hidden">
+      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
         <div class="px-4 py-2 border-b text-sm font-semibold">
           {{ uiText.previewLabel }} / {{ uiText.pageCountLabel(pagesHtml.length) }}
         </div>
