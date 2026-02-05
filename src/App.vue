@@ -248,9 +248,6 @@ onMounted(() => {
             >
               {{ uiText.clearMarkdownLabel }}
             </button>
-            <button class="text-xs px-2 py-1 rounded border" @click="paginate">
-              {{ uiText.repaginateLabel }}
-            </button>
           </div>
         </div>
         <textarea
