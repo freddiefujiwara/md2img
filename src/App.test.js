@@ -120,12 +120,13 @@ describe("EditorView", () => {
     const { app, router } = await mountApp();
     await waitForPaginate();
 
+    const replaceSpy = vi.spyOn(router, "replace");
     const textarea = container.querySelector("textarea");
     textarea.value = "Share me";
     textarea.dispatchEvent(new Event("input"));
     await nextTick();
 
-    expect(router.currentRoute.value.path).toBe("/Share%20me");
+    expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
     app.unmount();
   });
 

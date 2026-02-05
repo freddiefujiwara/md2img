@@ -100,11 +100,11 @@ watch(
   }
 );
 
-watch(markdownInput, (value) => {
+watch(markdownInput, async (value) => {
   if (!isReady.value) return;
   const targetPath = buildEncodedPath(value);
   if (route.path !== targetPath) {
-    router.replace({ path: targetPath });
+    await router.replace({ path: targetPath });
   }
 });
 

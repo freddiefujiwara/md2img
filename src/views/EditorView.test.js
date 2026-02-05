@@ -1,6 +1,6 @@
 import { createApp, nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import EditorView from "./EditorView.vue";
 
 const mountEditor = async (initialPath = "/") => {
@@ -42,12 +42,13 @@ describe("EditorView", () => {
     const { app, container, router } = await mountEditor();
     await nextTick();
 
+    const replaceSpy = vi.spyOn(router, "replace");
     const textarea = container.querySelector("textarea");
     textarea.value = "Share me";
     textarea.dispatchEvent(new Event("input"));
     await nextTick();
 
-    expect(router.currentRoute.value.path).toBe("/Share%20me");
+    expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
 
     app.unmount();
   });
