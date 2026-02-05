@@ -5,11 +5,23 @@ import "./style.css";
 
 const applySpaRedirect = () => {
   if (typeof window === "undefined") return;
-  const params = new URLSearchParams(window.location.search);
-  const redirectPath = params.get("p");
+  const search = window.location.search.startsWith("?")
+    ? window.location.search.slice(1)
+    : window.location.search;
+  if (!search) return;
+
+  const getRawParam = (key) => {
+    for (const pair of search.split("&")) {
+      const [name, value = ""] = pair.split("=");
+      if (name === key) return value;
+    }
+    return null;
+  };
+
+  const redirectPath = getRawParam("p");
   if (!redirectPath) return;
 
-  const query = params.get("q");
+  const query = getRawParam("q");
   const normalizedPath = redirectPath.startsWith("/")
     ? redirectPath.slice(1)
     : redirectPath;
