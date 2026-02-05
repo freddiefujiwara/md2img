@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
-/* Markdownの見た目（軽量・SNS向け） */
+/* Markdown styles (lightweight, for social posts) */
 .md-body {
-  line-height: 1.55;
+  line-height: inherit;
+  color: inherit;
   word-break: break-word;
 }
 
