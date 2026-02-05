@@ -10,33 +10,33 @@ import { buildPageStyle } from "../lib/style";
 import { createDebounce } from "../lib/timing";
 import { sampleMarkdown } from "../lib/sampleMarkdown";
 import { uiText } from "../lib/uiText";
+import { decodeMarkdownFromPath, encodeMarkdownToPath } from "../lib/url";
 
 const route = useRoute();
 const router = useRouter();
 
+// --- State ---
 const presetKey = ref("x");
-
 const backgroundColor = ref("#ffffff");
 const textColor = ref(textColorPresets[0].value);
 const fontSize = ref(22);
 const lineHeight = ref(1.55);
 const padding = ref(52);
-
 const markdownInput = ref(sampleMarkdown);
-
-const fullHtml = computed(() => marked.parse(markdownInput.value));
 const pagesHtml = ref([]); // HTML for each page.
-
 const exporting = ref(false);
+const isReady = ref(false);
 
-// Hidden DOM for measuring height.
+// --- DOM Refs ---
 const measureWrapRef = ref(null);
 const measureContentRef = ref(null);
-
-// Visible DOM for capture.
 const pageCaptureRef = ref(null);
 
+// --- Computed ---
+const fullHtml = computed(() => marked.parse(markdownInput.value));
+
 const activePreset = computed(() => resolvePreset(imagePresets, presetKey.value, "x"));
+
 const pageStyle = computed(() =>
   buildPageStyle({
     preset: activePreset.value.preset,
@@ -48,21 +48,11 @@ const pageStyle = computed(() =>
   })
 );
 
-const schedulePaginate = createDebounce(() => paginate(), 120);
-const isReady = ref(false);
+// --- Methods ---
 
-const decodeRouteText = (encodedValue) => {
-  if (!encodedValue) return "";
-  const encoded = Array.isArray(encodedValue) ? encodedValue.join("/") : encodedValue;
-  try {
-    return decodeURIComponent(encoded);
-  } catch (error) {
-    return "";
-  }
-};
-
-const buildEncodedPath = (value) => (value ? `/${encodeURIComponent(value)}` : "/");
-
+/**
+ * Calculates how the HTML should be split into pages based on the container height.
+ */
 async function paginate() {
   await nextTick();
   const wrap = measureWrapRef.value;
@@ -84,58 +74,38 @@ async function paginate() {
   });
 }
 
+const schedulePaginate = createDebounce(() => paginate(), 120);
+
+/**
+ * Syncs the markdown input from the URL route parameters.
+ */
 const syncFromRoute = (encodedValue) => {
-  if (!encodedValue) return;
-  const decoded = decodeRouteText(encodedValue);
+  const decoded = decodeMarkdownFromPath(encodedValue);
   if (decoded && decoded !== markdownInput.value) {
     markdownInput.value = decoded;
-    schedulePaginate();
+    // schedulePaginate will be triggered by the watch on markdownInput
   }
 };
 
-watch(
-  () => route.params.encoded,
-  (encodedValue) => {
-    syncFromRoute(encodedValue);
-  }
-);
-
-watch(markdownInput, async (value) => {
-  if (!isReady.value) return;
-  const targetPath = buildEncodedPath(value);
-  if (route.path !== targetPath) {
-    await router.replace({ path: targetPath });
-  }
-});
-
+/**
+ * Captures all pages as PNG images and either shares them or triggers downloads.
+ */
 async function exportAllPng() {
+  if (exporting.value) return;
   exporting.value = true;
   try {
-    // Wait for web fonts.
     if ("fonts" in document) await document.fonts.ready;
 
     const preset = activePreset.value.preset;
     const scale = 2;
-
-    const downloadBlob = (blob, filename) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    const files = [];
-
     const captureNode = pageCaptureRef.value;
     if (!captureNode) return;
 
-    // Capture each page.
+    const files = [];
+
+    // Capture each page by swapping content in the capture node
     for (let i = 0; i < pagesHtml.value.length; i++) {
       await nextTick();
-
-      // Swap page HTML.
       captureNode.querySelector(".md-body").innerHTML = pagesHtml.value[i];
 
       const canvas = await html2canvas(captureNode, {
@@ -149,21 +119,18 @@ async function exportAllPng() {
         canvas.toBlob((result) => resolve(result), "image/png");
       });
 
-      if (!blob) continue;
-
-      files.push({ blob, filename });
+      if (blob) {
+        files.push({ blob, filename });
+      }
     }
 
-    const isMobileDevice =
+    if (files.length === 0) return;
+
+    // Handle mobile sharing if available
+    const isMobile =
       typeof navigator !== "undefined" &&
       /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
-    const canShare =
-      isMobileDevice &&
-      typeof navigator !== "undefined" &&
-      typeof navigator.canShare === "function" &&
-      typeof navigator.share === "function";
-
-    if (canShare) {
+    if (isMobile && navigator.canShare && navigator.share) {
       const shareFiles = files.map(
         ({ blob, filename }) => new File([blob], filename, { type: "image/png" })
       );
@@ -175,32 +142,73 @@ async function exportAllPng() {
           });
           return;
         } catch (error) {
-          // Fall back to sequential downloads if sharing is dismissed or fails.
+          // Fall back to download if share failed or was cancelled
         }
       }
     }
 
-    if (files.length === 1) {
-      downloadBlob(files[0].blob, files[0].filename);
-      return;
-    }
+    // Standard download fallback
+    const downloadBlob = (blob, filename) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
 
-    for (const { blob, filename } of files) {
-      downloadBlob(blob, filename);
-    }
+    files.forEach(({ blob, filename }) => downloadBlob(blob, filename));
   } finally {
     exporting.value = false;
-    // Reset to the first page.
     await nextTick();
-    const node = pageCaptureRef.value;
-    if (node) node.querySelector(".md-body").innerHTML = pagesHtml.value[0] || fullHtml.value;
+    if (pageCaptureRef.value) {
+      pageCaptureRef.value.querySelector(".md-body").innerHTML =
+        pagesHtml.value[0] || fullHtml.value;
+    }
   }
 }
 
-const handleMarkdownInput = () => {
-  schedulePaginate();
-};
+// --- Watchers ---
 
+// Watch for changes in markdown or styles to trigger pagination.
+watch(
+  [markdownInput, presetKey, backgroundColor, textColor, fontSize, lineHeight, padding],
+  () => {
+    if (isReady.value) {
+      schedulePaginate();
+    }
+  }
+);
+
+const debouncedReplace = createDebounce((path) => {
+  router.replace({ path });
+}, 500);
+
+// Sync route when markdown input changes
+watch(markdownInput, (value) => {
+  if (!isReady.value) return;
+  const targetPath = encodeMarkdownToPath(value);
+  if (route.path !== targetPath) {
+    debouncedReplace(targetPath);
+  }
+});
+
+// Sync input when route changes (e.g., browser back/forward)
+watch(
+  () => route.params.encoded,
+  (encodedValue) => {
+    syncFromRoute(encodedValue);
+  }
+);
+
+// --- Lifecycle ---
+onMounted(() => {
+  syncFromRoute(route.params.encoded);
+  paginate();
+  isReady.value = true;
+});
+
+// --- Expose for testing ---
 defineExpose(
   import.meta.env.MODE === "test"
     ? {
@@ -217,25 +225,19 @@ defineExpose(
       }
     : {}
 );
-
-onMounted(() => {
-  syncFromRoute(route.params.encoded);
-  paginate();
-  isReady.value = true;
-});
 </script>
 
 <template>
-  <div class="min-h-dvh bg-slate-50">
-    <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b">
+  <div class="min-h-dvh bg-slate-50 text-slate-900">
+    <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200">
       <div class="max-w-6xl mx-auto px-3 py-2 flex flex-wrap gap-2 items-center">
         <div class="flex gap-2 flex-wrap">
           <button
             v-for="(preset, key) in imagePresets"
             :key="key"
-            class="px-3 py-2 rounded-lg text-sm border"
-            :class="presetKey === key ? 'bg-slate-900 text-white border-slate-900' : 'bg-white'"
-            @click="presetKey = key; schedulePaginate()"
+            class="px-3 py-2 rounded-lg text-sm border transition-colors"
+            :class="presetKey === key ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 hover:bg-slate-50'"
+            @click="presetKey = key"
           >
             {{ preset.label }}
           </button>
@@ -246,8 +248,7 @@ onMounted(() => {
           <input
             type="color"
             v-model="backgroundColor"
-            class="h-9 w-10 rounded border"
-            @input="schedulePaginate"
+            class="h-9 w-10 rounded border border-slate-200 cursor-pointer"
           />
 
           <label class="text-xs text-slate-600 ml-2">{{ uiText.textColorLabel }}</label>
@@ -255,25 +256,25 @@ onMounted(() => {
             <button
               v-for="option in textColorPresets"
               :key="option.value"
-              class="h-9 px-2 rounded-lg text-xs border flex items-center gap-2"
-              :class="textColor === option.value ? 'border-slate-900' : 'border-slate-200'"
-              @click="textColor = option.value; schedulePaginate()"
+              class="h-9 px-2 rounded-lg text-xs border flex items-center gap-2 transition-colors"
+              :class="textColor === option.value ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-white hover:bg-slate-50'"
+              @click="textColor = option.value"
             >
-              <span class="inline-block h-4 w-4 rounded-full border" :style="{ background: option.value }"></span>
+              <span class="inline-block h-4 w-4 rounded-full border border-slate-200" :style="{ background: option.value }"></span>
               {{ option.label }}
             </button>
           </div>
 
           <label class="text-xs text-slate-600 ml-2">{{ uiText.textSizeLabel }}</label>
-          <input type="range" min="16" max="30" step="1" v-model.number="fontSize" @input="schedulePaginate" />
-          <span class="text-xs w-10 text-right">{{ fontSize }}px</span>
+          <input type="range" min="16" max="30" step="1" v-model.number="fontSize" class="cursor-pointer" />
+          <span class="text-xs w-8 text-right font-mono">{{ fontSize }}px</span>
 
           <label class="text-xs text-slate-600 ml-2">{{ uiText.lineHeightLabel }}</label>
-          <input type="range" min="1.2" max="1.9" step="0.05" v-model.number="lineHeight" @input="schedulePaginate" />
-          <span class="text-xs w-10 text-right">{{ lineHeight.toFixed(2) }}</span>
+          <input type="range" min="1.2" max="1.9" step="0.05" v-model.number="lineHeight" class="cursor-pointer" />
+          <span class="text-xs w-10 text-right font-mono">{{ lineHeight.toFixed(2) }}</span>
 
           <button
-            class="ml-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold disabled:opacity-60"
+            class="ml-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold shadow-sm hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             :disabled="exporting"
             @click="exportAllPng"
           >
@@ -283,46 +284,42 @@ onMounted(() => {
       </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-3 min-w-0">
+    <main class="max-w-6xl mx-auto p-3 grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
       <!-- Editor -->
-      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
-        <div class="px-4 py-2 border-b text-sm font-semibold flex items-center justify-between">
+      <section class="bg-white rounded-2xl border border-slate-200 overflow-hidden min-w-0 shadow-sm">
+        <div class="px-4 py-2 border-b border-slate-200 bg-slate-50/50 text-sm font-semibold flex items-center justify-between">
           <span>{{ uiText.markdownLabel }}</span>
-          <div class="flex items-center gap-2">
-            <button
-              class="text-xs px-2 py-1 rounded border"
-              @click="markdownInput = ''; schedulePaginate()"
-            >
-              {{ uiText.clearMarkdownLabel }}
-            </button>
-          </div>
+          <button
+            class="text-xs px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+            @click="markdownInput = ''"
+          >
+            {{ uiText.clearMarkdownLabel }}
+          </button>
         </div>
         <textarea
           v-model="markdownInput"
-          class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none"
-          @input="handleMarkdownInput"
+          class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none bg-transparent"
         />
       </section>
 
       <!-- Preview -->
-      <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
-        <div class="px-4 py-2 border-b text-sm font-semibold">
+      <section class="bg-white rounded-2xl border border-slate-200 overflow-hidden min-w-0 shadow-sm">
+        <div class="px-4 py-2 border-b border-slate-200 bg-slate-50/50 text-sm font-semibold">
           {{ uiText.previewLabel }} / {{ uiText.pageCountLabel(pagesHtml.length) }}
         </div>
 
-        <div class="p-3 overflow-auto">
-          <div class="flex justify-center">
-            <!-- Show full size, scroll to view. -->
+        <div class="p-3 overflow-auto h-[45dvh] lg:h-[75dvh]">
+          <div class="flex justify-center min-h-full items-start">
             <div
               ref="pageCaptureRef"
-              class="shadow-xl rounded-xl overflow-hidden"
+              class="shadow-2xl rounded-sm overflow-hidden"
               :style="pageStyle"
             >
               <div class="md-body" v-html="pagesHtml[0] || fullHtml"></div>
             </div>
           </div>
 
-          <p class="mt-3 text-xs text-slate-500">
+          <p class="mt-4 text-xs text-slate-500 text-center">
             {{ uiText.splitHint }}
           </p>
         </div>
@@ -330,22 +327,22 @@ onMounted(() => {
     </main>
 
     <!-- Hidden area for measuring height. -->
-    <div class="fixed -left-[99999px] top-0 opacity-0 pointer-events-none">
+    <div class="fixed -left-[99999px] top-0 opacity-0 pointer-events-none" aria-hidden="true">
       <div ref="measureWrapRef" class="overflow-hidden" :style="pageStyle">
         <div ref="measureContentRef"></div>
       </div>
     </div>
 
     <!-- Mobile save button at the bottom. -->
-    <div class="lg:hidden fixed bottom-3 left-3 right-3">
+    <div class="lg:hidden fixed bottom-4 left-4 right-4 z-20">
       <button
-        class="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold shadow-lg disabled:opacity-60"
+        class="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold shadow-xl hover:bg-emerald-700 disabled:opacity-60 transition-all"
         :disabled="exporting"
         @click="exportAllPng"
       >
         {{ exporting ? uiText.savingLabel : `${uiText.savePngLabel} (${pagesHtml.length})` }}
       </button>
     </div>
-    <div class="h-20 lg:hidden"></div>
+    <div class="h-24 lg:hidden"></div>
   </div>
 </template>

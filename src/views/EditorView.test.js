@@ -39,6 +39,7 @@ describe("EditorView", () => {
   });
 
   it("replaces the route when input changes", async () => {
+    vi.useFakeTimers();
     const { app, container, router } = await mountEditor();
     await nextTick();
 
@@ -46,10 +47,17 @@ describe("EditorView", () => {
     const textarea = container.querySelector("textarea");
     textarea.value = "Share me";
     textarea.dispatchEvent(new Event("input"));
+
+    // Wait for the watch to trigger
+    await nextTick();
+
+    // Run timers for the debouncedReplace
+    vi.runAllTimers();
     await nextTick();
 
     expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
 
     app.unmount();
+    vi.useRealTimers();
   });
 });
