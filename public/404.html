@@ -17,15 +17,14 @@
           .split("/")
           .slice(1 + segmentCount)
           .join("/");
-        var query = location.search ? "&q=" + location.search.slice(1) : "";
         var redirectUrl =
           location.protocol +
           "//" +
           location.host +
           basePath +
-          "/?p=" +
+          "/?/" +
           redirectPath +
-          query +
+          (location.search ? "&" + location.search.slice(1) : "") +
           location.hash;
         location.replace(redirectUrl);
       })();

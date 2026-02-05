@@ -55,4 +55,23 @@ describe("main", () => {
 
     expect(replaceState).toHaveBeenCalled();
   });
+
+  it("rewrites spa redirect path marker before mounting", async () => {
+    const replaceState = vi.fn();
+    Object.defineProperty(window, "history", {
+      value: { replaceState },
+      configurable: true,
+    });
+    Object.defineProperty(window, "location", {
+      value: {
+        search: "?/share%20text&mode=1",
+        hash: "#preview",
+      },
+      configurable: true,
+    });
+
+    await import("./main.js?redirect-path");
+
+    expect(replaceState).toHaveBeenCalled();
+  });
 });
