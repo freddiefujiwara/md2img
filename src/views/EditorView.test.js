@@ -29,7 +29,7 @@ describe("EditorView", () => {
   });
 
   it("hydrates the textarea from the encoded route", async () => {
-    const { app, container } = await mountEditor("/%E3%83%86%E3%82%B9%E3%83%88");
+    const { app, container } = await mountEditor("/mMMk6GQTDEA");
     await nextTick();
 
     const textarea = container.querySelector("textarea");
@@ -55,7 +55,7 @@ describe("EditorView", () => {
     vi.runAllTimers();
     await nextTick();
 
-    expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
+    expect(replaceSpy).toHaveBeenCalledWith({ path: "/MoCwhgTgpgBAtlIA" });
 
     app.unmount();
     vi.useRealTimers();
