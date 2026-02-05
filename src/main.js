@@ -3,44 +3,39 @@ import App from "./App.vue";
 import router from "./router";
 import "./style.css";
 
+/**
+ * Handles SPA redirection for environments like GitHub Pages.
+ * It parses the query parameters to find a redirect path and query.
+ */
 const applySpaRedirect = () => {
   if (typeof window === "undefined") return;
-  const search = window.location.search;
+
+  const { search, hash } = window.location;
   if (!search) return;
 
+  // Handle the "?/" pattern (e.g., from 404.html redirection)
   if (search.startsWith("?/")) {
     const trimmed = search.slice(2);
     const [rawPath, rawQuery] = trimmed.split("&");
-    const normalizedPath = rawPath.startsWith("/")
-      ? rawPath.slice(1)
-      : rawPath;
+    const normalizedPath = rawPath.replace(/^\//, "");
     const nextUrl = `${import.meta.env.BASE_URL}${normalizedPath}${
       rawQuery ? `?${rawQuery}` : ""
-    }${window.location.hash}`;
+    }${hash}`;
     window.history.replaceState(null, "", nextUrl);
     return;
   }
 
-  const queryString = search.startsWith("?") ? search.slice(1) : search;
-  const getRawParam = (key) => {
-    for (const pair of queryString.split("&")) {
-      const [name, value = ""] = pair.split("=");
-      if (name === key) return value;
-    }
-    return null;
-  };
-
-  const redirectPath = getRawParam("p");
-  if (!redirectPath) return;
-
-  const query = getRawParam("q");
-  const normalizedPath = redirectPath.startsWith("/")
-    ? redirectPath.slice(1)
-    : redirectPath;
-  const nextUrl = `${import.meta.env.BASE_URL}${normalizedPath}${
-    query ? `?${query}` : ""
-  }${window.location.hash}`;
-  window.history.replaceState(null, "", nextUrl);
+  // Handle standard "p=" and "q=" parameters
+  const params = new URLSearchParams(search);
+  const redirectPath = params.get("p");
+  if (redirectPath) {
+    const query = params.get("q");
+    const normalizedPath = redirectPath.replace(/^\//, "");
+    const nextUrl = `${import.meta.env.BASE_URL}${normalizedPath}${
+      query ? `?${query}` : ""
+    }${hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  }
 };
 
 applySpaRedirect();

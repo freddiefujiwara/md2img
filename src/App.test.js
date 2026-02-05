@@ -96,6 +96,10 @@ describe("EditorView", () => {
     const textarea = container.querySelector("textarea");
     textarea.value = "# Updated";
     textarea.dispatchEvent(new Event("input"));
+
+    // Wait for the watch to trigger
+    await nextTick();
+
     expect(paginateHtml).not.toHaveBeenCalled();
 
     vi.runAllTimers();
@@ -117,6 +121,7 @@ describe("EditorView", () => {
   });
 
   it("replaces the route when markdown input updates", async () => {
+    vi.useFakeTimers();
     const { app, router } = await mountApp();
     await waitForPaginate();
 
@@ -124,10 +129,17 @@ describe("EditorView", () => {
     const textarea = container.querySelector("textarea");
     textarea.value = "Share me";
     textarea.dispatchEvent(new Event("input"));
+
+    // Wait for the watch to trigger
+    await nextTick();
+
+    // Run timers for the debouncedReplace
+    vi.runAllTimers();
     await nextTick();
 
     expect(replaceSpy).toHaveBeenCalledWith({ path: "/Share%20me" });
     app.unmount();
+    vi.useRealTimers();
   });
 
   it("syncs textarea when the route changes", async () => {
