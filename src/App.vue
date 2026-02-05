@@ -220,9 +220,17 @@ onMounted(() => {
       <section class="bg-white rounded-2xl border overflow-hidden min-w-0">
         <div class="px-4 py-2 border-b text-sm font-semibold flex items-center justify-between">
           <span>{{ uiText.markdownLabel }}</span>
-          <button class="text-xs px-2 py-1 rounded border" @click="paginate">
-            {{ uiText.repaginateLabel }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              class="text-xs px-2 py-1 rounded border"
+              @click="markdownInput = ''; schedulePaginate()"
+            >
+              {{ uiText.clearMarkdownLabel }}
+            </button>
+            <button class="text-xs px-2 py-1 rounded border" @click="paginate">
+              {{ uiText.repaginateLabel }}
+            </button>
+          </div>
         </div>
         <textarea
           v-model="markdownInput"
