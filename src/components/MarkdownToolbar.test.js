@@ -67,13 +67,26 @@ describe("MarkdownToolbar", () => {
     const { app, container, textarea } = await mountToolbar("Hello");
     textarea.setSelectionRange(5, 5);
 
-    container.querySelector('[data-action="link"]').click();
-    expect(textarea.value).toBe("Hello[]()");
-    expect(textarea.selectionStart).toBe(6);
-
     container.querySelector('[data-action="bold"]').click();
-    expect(textarea.value).toBe("Hello[****]()");
-    expect(textarea.selectionStart).toBe(8);
+    expect(textarea.value).toBe("Hello****");
+    expect(textarea.selectionStart).toBe(7);
+
+    container.querySelector('[data-action="strike"]').click();
+    expect(textarea.value).toBe("Hello**~~~~**");
+    expect(textarea.selectionStart).toBe(9);
+
+    app.unmount();
+  });
+
+  it("toggles the horizontal rule line", async () => {
+    const { app, container, textarea } = await mountToolbar("Line");
+    textarea.setSelectionRange(2, 2);
+
+    container.querySelector('[data-action="rule"]').click();
+    expect(textarea.value).toBe("---");
+
+    container.querySelector('[data-action="rule"]').click();
+    expect(textarea.value).toBe("");
 
     app.unmount();
   });

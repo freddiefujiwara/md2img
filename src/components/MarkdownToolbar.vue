@@ -56,6 +56,10 @@ const applyLinePrefix = (type) => {
     newLine = /^> /.test(line) ? line.replace(/^> /, "") : `> ${line}`;
   }
 
+  if (type === "rule") {
+    newLine = line.trim() === "---" ? line.replace(/---/, "") : "---";
+  }
+
   const newValue = value.slice(0, lineStart) + newLine + value.slice(lineEnd);
   const delta = newLine.length - line.length;
   updateTextarea(textarea, newValue, start + delta, end + delta);
@@ -114,22 +118,32 @@ const insertSnippet = (snippet, cursorOffset) => {
         <button
           type="button"
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
-          data-action="link"
-          @mousedown.prevent
-          @touchstart.prevent
-          @click="insertSnippet('[]()', 1)"
-        >
-          []()
-        </button>
-        <button
-          type="button"
-          class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="bold"
           @mousedown.prevent
           @touchstart.prevent
           @click="insertSnippet('****', 2)"
         >
           ****
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
+          data-action="strike"
+          @mousedown.prevent
+          @touchstart.prevent
+          @click="insertSnippet('~~~~', 2)"
+        >
+          ~~~~
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
+          data-action="rule"
+          @mousedown.prevent
+          @touchstart.prevent
+          @click="applyLinePrefix('rule')"
+        >
+          ---
         </button>
       </div>
     </div>
