@@ -40,4 +40,19 @@ describe("url utilities", () => {
     const decoded = decodeMarkdownFromPath(encodedArray);
     expect(decoded).toBe(markdown);
   });
+
+  it("handles null or undefined input", () => {
+    expect(decodeMarkdownFromPath(null)).toBe("");
+    expect(decodeMarkdownFromPath(undefined)).toBe("");
+  });
+
+  it("handles invalid LZString and invalid URI encoding gracefully", () => {
+    // A string that is not LZString and has invalid % encoding (e.g. % at the end)
+    const invalid = "some-string-%";
+    expect(decodeMarkdownFromPath(invalid)).toBe("");
+  });
+
+  it("handles empty string compression (special case 'Q')", () => {
+    expect(decodeMarkdownFromPath("Q")).toBe("");
+  });
 });

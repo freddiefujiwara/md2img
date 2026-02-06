@@ -120,6 +120,14 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener("scroll", updateToolbarOffset);
   }
 });
+
+defineExpose(
+  import.meta.env.MODE === "test"
+    ? {
+        toolbarOffset,
+      }
+    : {}
+);
 </script>
 
 <template>

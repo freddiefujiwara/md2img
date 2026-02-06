@@ -27,6 +27,7 @@ const markdownInput = ref(sampleMarkdown);
 const pagesHtml = ref([]); // HTML for each page.
 const exporting = ref(false);
 const isReady = ref(false);
+const isFocused = ref(false);
 
 // --- DOM Refs ---
 const measureWrapRef = ref(null);
@@ -231,7 +232,10 @@ defineExpose(
 
 <template>
   <div class="min-h-dvh bg-slate-50 text-slate-900">
-    <header class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-slate-200">
+    <header
+      class="z-10 bg-white/90 backdrop-blur border-b border-slate-200 transition-all lg:sticky lg:top-0"
+      :class="isFocused ? 'relative' : 'sticky top-0'"
+    >
       <div class="max-w-6xl mx-auto px-3 py-2 flex flex-wrap gap-2 items-center">
         <div class="flex gap-2 flex-wrap">
           <button
@@ -301,7 +305,10 @@ defineExpose(
         <textarea
           ref="markdownTextareaRef"
           v-model="markdownInput"
-          class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none bg-transparent"
+          @focus="isFocused = true"
+          @blur="isFocused = false"
+          class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none bg-transparent transition-all"
+          :class="isFocused ? 'h-[60dvh] lg:h-[75dvh] pb-[30dvh] lg:pb-4' : ''"
         />
       </section>
 
@@ -348,6 +355,9 @@ defineExpose(
         {{ exporting ? uiText.savingLabel : `${uiText.savePngLabel} (${pagesHtml.length})` }}
       </button>
     </div>
-    <div class="h-40 lg:hidden"></div>
+    <div
+      class="lg:hidden transition-all"
+      :class="isFocused ? 'h-96' : 'h-40'"
+    ></div>
   </div>
 </template>
