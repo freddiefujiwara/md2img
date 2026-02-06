@@ -1,55 +1,78 @@
-# md2img
+# Markdown to Image tool for SNS posting (md2img)
 
-A small web app that converts Markdown to an image.
+A simple and powerful web application that converts Markdown text into high-quality images, perfectly optimized for sharing on social media platforms (SNS) like X (formerly Twitter), Instagram, and more.
 
-Demo: https://freddiefujiwara.com/md2img/
+Demo: [https://freddiefujiwara.com/md2img/](https://freddiefujiwara.com/md2img/)
 
-## How to use (very simple)
+## Key Features
 
-1. Open the app in your browser.
-2. Paste or type Markdown.
-3. The preview shows the result.
-4. Export the preview as an image.
+- **Markdown Support**: Easily format your content using standard Markdown (Bold, Italic, Tables, Code blocks, etc.).
+- **Auto-Pagination**: Long text is automatically split into multiple pages/images.
+- **High Resolution**: Exports as high-resolution PNG images (Scale: 2) for crisp quality on all devices.
+- **State Persistence**: Your Markdown content is saved in the URL, making it easy to share or bookmark.
+- **Mobile Friendly**: Fully responsive design for creating images on the go.
+- **Privacy Focused**: All conversion happens in your browser. No data is sent to a server.
+
+## Tech Stack
+
+- **Framework**: [Vue 3](https://vuejs.org/) (Composition API)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Markdown Parsing**: [marked](https://marked.js.org/)
+- **Image Generation**: [html2canvas](https://html2canvas.hertzen.com/)
+- **URL Compression**: [lz-string](https://pieroxy.net/blog/pages/lz-string/index.html)
+
+## How to use
+
+1.  **Open the app**: Visit the demo link or run it locally.
+2.  **Write Markdown**: Type or paste your content into the editor.
+3.  **Preview**: See the real-time preview of how your images will look.
+4.  **Export**: Click the download button to save your content as PNG images.
 
 ## Development (local)
 
-1. Install Node.js (LTS is fine).
-2. Install packages:
+### Prerequisites
 
-```bash
+- [Node.js](https://nodejs.org/) (LTS recommended)
+
+### Installation
+
+\`\`\`bash
 npm install
-```
+\`\`\`
 
-3. Start the dev server:
+### Running Dev Server
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
-4. Open the URL that Vite prints (usually http://localhost:5173).
+Open the URL that Vite prints (usually \`http://localhost:5173/md2img/\`).
 
-## Build
+### Running Tests
 
-```bash
+\`\`\`bash
+npm run test
+\`\`\`
+
+## Build and Deploy
+
+### Build
+
+\`\`\`bash
 npm run build
-```
+\`\`\`
 
-The built files are in `dist/`.
+The production-ready files will be in the \`dist/\` directory.
 
-## Preview the build
+### Preview Build
 
-```bash
+\`\`\`bash
 npm run preview
-```
+\`\`\`
 
-## Deploy (simple)
+### Deployment
 
-This project is a static site. Deploy the `dist/` folder to any static hosting.
+This project is a static site. Deploy the \`dist/\` folder to any static hosting service (GitHub Pages, Vercel, Netlify, etc.).
 
-Example steps:
-
-1. Run `npm run build`.
-2. Upload the `dist/` folder to your hosting service.
-3. Set the site root to `dist/`.
-
-If you use GitHub Pages or another static host, follow their normal upload steps and point it to `dist/`.
+For GitHub Pages, ensure your base path is correctly configured in \`vite.config.js\`.
