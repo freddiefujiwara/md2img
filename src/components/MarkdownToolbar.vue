@@ -6,6 +6,8 @@ const props = defineProps({
   },
 });
 
+import { onBeforeUnmount, onMounted, ref } from "vue";
+
 const focusTextarea = (textarea) => {
   textarea.focus({ preventScroll: true });
 };
@@ -76,12 +78,49 @@ const insertSnippet = (snippet, cursorOffset) => {
   const cursor = start + cursorOffset;
   updateTextarea(textarea, newValue, cursor, cursor);
 };
+
+const toolbarOffset = ref(0);
+
+const updateToolbarOffset = () => {
+  if (typeof window === "undefined") return;
+  const viewport = window.visualViewport;
+  if (!viewport) {
+    toolbarOffset.value = 0;
+    return;
+  }
+  const offsetFromBottom = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+  toolbarOffset.value = offsetFromBottom;
+};
+
+onMounted(() => {
+  updateToolbarOffset();
+  if (typeof window === "undefined") return;
+  window.addEventListener("resize", updateToolbarOffset);
+  window.addEventListener("scroll", updateToolbarOffset);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", updateToolbarOffset);
+    window.visualViewport.addEventListener("scroll", updateToolbarOffset);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof window === "undefined") return;
+  window.removeEventListener("resize", updateToolbarOffset);
+  window.removeEventListener("scroll", updateToolbarOffset);
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener("resize", updateToolbarOffset);
+    window.visualViewport.removeEventListener("scroll", updateToolbarOffset);
+  }
+});
 </script>
 
 <template>
   <div
-    class="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur"
-    style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);"
+    class="lg:hidden fixed inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur"
+    :style="{
+      bottom: `calc(${toolbarOffset}px + env(safe-area-inset-bottom, 0px))`,
+      paddingBottom: '0.5rem',
+    }"
   >
     <div class="px-3 pt-2 overflow-x-auto">
       <div class="flex gap-2 min-w-max" role="toolbar" aria-label="Markdown toolbar">
