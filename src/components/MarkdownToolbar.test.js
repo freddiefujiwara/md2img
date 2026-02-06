@@ -69,12 +69,24 @@ describe("MarkdownToolbar", () => {
     textarea.setSelectionRange(5, 5);
 
     container.querySelector('[data-action="bold"]').click();
-    expect(textarea.value).toBe("Hello****");
+    expect(textarea.value).toBe("Hello**");
+    expect(textarea.selectionStart).toBe(6);
+
+    container.querySelector('[data-action="code"]').click();
+    expect(textarea.value).toBe("Hello*``*");
     expect(textarea.selectionStart).toBe(7);
 
+    container.querySelector('[data-action="table"]').click();
+    expect(textarea.value).toBe("Hello*`|`*");
+    expect(textarea.selectionStart).toBe(8);
+
+    container.querySelector('[data-action="table-divider"]').click();
+    expect(textarea.value).toBe("Hello*`||-`*");
+    expect(textarea.selectionStart).toBe(10);
+
     container.querySelector('[data-action="strike"]').click();
-    expect(textarea.value).toBe("Hello**~~~~**");
-    expect(textarea.selectionStart).toBe(9);
+    expect(textarea.value).toBe("Hello*`||-~~~~`*");
+    expect(textarea.selectionStart).toBe(12);
 
     app.unmount();
   });
