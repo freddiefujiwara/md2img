@@ -11,6 +11,7 @@ import { createDebounce } from "../lib/timing";
 import { sampleMarkdown } from "../lib/sampleMarkdown";
 import { uiText } from "../lib/uiText";
 import { decodeMarkdownFromPath, encodeMarkdownToPath } from "../lib/url";
+import MarkdownToolbar from "../components/MarkdownToolbar.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -31,6 +32,7 @@ const isReady = ref(false);
 const measureWrapRef = ref(null);
 const measureContentRef = ref(null);
 const pageCaptureRef = ref(null);
+const markdownTextareaRef = ref(null);
 
 // --- Computed ---
 const fullHtml = computed(() => marked.parse(markdownInput.value));
@@ -297,6 +299,7 @@ defineExpose(
           </button>
         </div>
         <textarea
+          ref="markdownTextareaRef"
           v-model="markdownInput"
           class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none bg-transparent"
         />
@@ -333,8 +336,10 @@ defineExpose(
       </div>
     </div>
 
+    <MarkdownToolbar :target-ref="markdownTextareaRef" />
+
     <!-- Mobile save button at the bottom. -->
-    <div class="lg:hidden fixed bottom-4 left-4 right-4 z-20">
+    <div class="lg:hidden fixed bottom-24 left-4 right-4 z-20">
       <button
         class="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold shadow-xl hover:bg-emerald-700 disabled:opacity-60 transition-all"
         :disabled="exporting"
@@ -343,6 +348,6 @@ defineExpose(
         {{ exporting ? uiText.savingLabel : `${uiText.savePngLabel} (${pagesHtml.length})` }}
       </button>
     </div>
-    <div class="h-24 lg:hidden"></div>
+    <div class="h-40 lg:hidden"></div>
   </div>
 </template>
