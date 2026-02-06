@@ -25,20 +25,20 @@ body,
 .md-body code {
   padding: 0.12em 0.35em;
   border-radius: 0.4em;
-  background: rgba(0,0,0,0.06);
+  background: color-mix(in srgb, currentColor, transparent 94%);
 }
 
 .md-body pre {
   padding: 0.85em;
   border-radius: 0.8em;
-  background: rgba(0,0,0,0.06);
+  background: color-mix(in srgb, currentColor, transparent 94%);
   overflow: auto;
 }
 
 .md-body blockquote {
-  border-left: 4px solid rgba(0,0,0,0.15);
+  border-left: 4px solid color-mix(in srgb, currentColor, transparent 85%);
   padding-left: 0.8em;
-  color: rgba(0,0,0,0.78);
+  color: color-mix(in srgb, currentColor, transparent 22%);
   margin: 0.7em 0;
 }
 
@@ -50,13 +50,13 @@ body,
 
 .md-body th,
 .md-body td {
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid color-mix(in srgb, currentColor, transparent 85%);
   padding: 0.4em 0.8em;
   text-align: left;
 }
 
 .md-body th {
-  background: rgba(0,0,0,0.06);
+  background: color-mix(in srgb, currentColor, transparent 94%);
   font-weight: 800;
 }
 
