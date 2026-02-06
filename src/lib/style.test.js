@@ -23,6 +23,9 @@ describe("buildPageStyle", () => {
       lineHeight: "1.4",
       padding: "16px",
       fontFamily: defaultFontStack,
+      "--md-color-06": "rgba(0, 0, 0, 0.06)",
+      "--md-color-15": "rgba(0, 0, 0, 0.15)",
+      "--md-color-78": "rgba(0, 0, 0, 0.78)",
     });
   });
 
