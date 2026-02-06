@@ -41,4 +41,21 @@ describe("buildPageStyle", () => {
       })
     ).toThrow("preset");
   });
+
+  it("builds color variables from 3-digit hex values", () => {
+    const preset = { width: 400, height: 300 };
+
+    const result = buildPageStyle({
+      preset,
+      backgroundColor: "#fff",
+      textColor: "#abc",
+      fontSize: 16,
+      lineHeight: 1.5,
+      padding: 20,
+    });
+
+    expect(result["--md-color-06"]).toBe("rgba(170, 187, 204, 0.06)");
+    expect(result["--md-color-15"]).toBe("rgba(170, 187, 204, 0.15)");
+    expect(result["--md-color-78"]).toBe("rgba(170, 187, 204, 0.78)");
+  });
 });
