@@ -72,9 +72,17 @@ describe("MarkdownToolbar", () => {
     expect(textarea.value).toBe("Hello****");
     expect(textarea.selectionStart).toBe(7);
 
-    container.querySelector('[data-action="strike"]').click();
-    expect(textarea.value).toBe("Hello**~~~~**");
+    container.querySelector('[data-action="code"]').click();
+    expect(textarea.value).toBe("Hello**``**");
+    expect(textarea.selectionStart).toBe(8);
+
+    container.querySelector('[data-action="table"]').click();
+    expect(textarea.value).toBe("Hello**`|`**");
     expect(textarea.selectionStart).toBe(9);
+
+    container.querySelector('[data-action="strike"]').click();
+    expect(textarea.value).toBe("Hello**`|~~~~`**");
+    expect(textarea.selectionStart).toBe(11);
 
     app.unmount();
   });

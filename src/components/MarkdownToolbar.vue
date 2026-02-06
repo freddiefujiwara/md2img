@@ -193,6 +193,26 @@ defineExpose(
         <button
           type="button"
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
+          data-action="code"
+          @mousedown.prevent
+          @touchstart.prevent.stop="handleSnippetAction('``', 1)"
+          @click="handleSnippetAction('``', 1)"
+        >
+          `
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
+          data-action="table"
+          @mousedown.prevent
+          @touchstart.prevent.stop="handleSnippetAction('|', 1)"
+          @click="handleSnippetAction('|', 1)"
+        >
+          |
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="rule"
           @mousedown.prevent
           @touchstart.prevent.stop="handleLineAction('rule')"
