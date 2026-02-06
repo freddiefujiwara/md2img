@@ -1,5 +1,5 @@
 import { createApp, nextTick, ref } from "vue";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import MarkdownToolbar from "./MarkdownToolbar.vue";
 
 const mountToolbar = async (initialValue = "Hello") => {
@@ -8,12 +8,13 @@ const mountToolbar = async (initialValue = "Hello") => {
     setup() {
       const value = ref(initialValue);
       const textarea = ref(null);
-      return { value, textarea };
+      const toolbarRef = ref(null);
+      return { value, textarea, toolbarRef };
     },
     template: `
       <div>
         <textarea ref="textarea" v-model="value"></textarea>
-        <MarkdownToolbar :target-ref="textarea" />
+        <MarkdownToolbar ref="toolbarRef" :target-ref="textarea" />
       </div>
     `,
   };
@@ -21,11 +22,11 @@ const mountToolbar = async (initialValue = "Hello") => {
   const app = createApp(Wrapper);
   const container = document.createElement("div");
   document.body.appendChild(container);
-  app.mount(container);
+  const vm = app.mount(container);
   await nextTick();
 
   const textarea = container.querySelector("textarea");
-  return { app, container, textarea };
+  return { app, container, textarea, vm };
 };
 
 describe("MarkdownToolbar", () => {
@@ -88,6 +89,83 @@ describe("MarkdownToolbar", () => {
     container.querySelector('[data-action="rule"]').click();
     expect(textarea.value).toBe("");
 
+    app.unmount();
+  });
+
+  it("updates toolbarOffset when visualViewport events occur", async () => {
+    // Mock visualViewport
+    const visualViewport = {
+      height: 500,
+      offsetTop: 0,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal("innerHeight", 800);
+    vi.stubGlobal("visualViewport", visualViewport);
+
+    const { app, vm } = await mountToolbar();
+    await nextTick();
+
+    // visualViewport.height is 500, window.innerHeight is 800.
+    // offsetFromBottom = 800 - 500 - 0 = 300.
+    expect(vm.toolbarRef.toolbarOffset).toBe(300);
+
+    // Simulate change
+    visualViewport.height = 400;
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+
+    // offsetFromBottom = 800 - 400 - 0 = 400.
+    expect(vm.toolbarRef.toolbarOffset).toBe(400);
+
+    app.unmount();
+    vi.unstubAllGlobals();
+  });
+
+  it("handles null target-ref gracefully", async () => {
+    const Wrapper = {
+      components: { MarkdownToolbar },
+      template: `<MarkdownToolbar :target-ref="null" />`,
+    };
+    const app = createApp(Wrapper);
+    const container = document.createElement("div");
+    app.mount(container);
+    await nextTick();
+
+    // Should not throw when clicked
+    const headingButton = container.querySelector('[data-action="heading"]');
+    headingButton.click();
+
+    app.unmount();
+  });
+
+  it("handles non-textarea targets", async () => {
+    // Test case where target is defined but not a textarea
+    const Wrapper = {
+      components: { MarkdownToolbar },
+      template: `<MarkdownToolbar :target-ref="{ tagName: 'DIV' }" />`,
+    };
+    const app = createApp(Wrapper);
+    const container = document.createElement("div");
+    app.mount(container);
+    await nextTick();
+    const headingButton = container.querySelector('[data-action="heading"]');
+    headingButton.click();
+    app.unmount();
+  });
+
+  it("handles ref-like targets that are not textareas", async () => {
+    // Test case where target.value is defined but not a textarea
+    const Wrapper = {
+      components: { MarkdownToolbar },
+      template: `<MarkdownToolbar :target-ref="{ value: { tagName: 'DIV' } }" />`,
+    };
+    const app = createApp(Wrapper);
+    const container = document.createElement("div");
+    app.mount(container);
+    await nextTick();
+    const headingButton = container.querySelector('[data-action="heading"]');
+    headingButton.click();
     app.unmount();
   });
 });

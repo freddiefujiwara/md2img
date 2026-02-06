@@ -74,4 +74,17 @@ describe("main", () => {
 
     expect(replaceState).toHaveBeenCalled();
   });
+
+  it("does nothing if search is empty", async () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        search: "",
+        hash: "",
+      },
+      configurable: true,
+    });
+
+    await import("./main.js?no-search");
+    // Should just not throw
+  });
 });
