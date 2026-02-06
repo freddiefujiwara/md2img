@@ -79,6 +79,14 @@ const insertSnippet = (snippet, cursorOffset) => {
   updateTextarea(textarea, newValue, cursor, cursor);
 };
 
+const handleLineAction = (type) => {
+  applyLinePrefix(type);
+};
+
+const handleSnippetAction = (snippet, cursorOffset) => {
+  insertSnippet(snippet, cursorOffset);
+};
+
 const toolbarOffset = ref(0);
 
 const updateToolbarOffset = () => {
@@ -129,8 +137,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="heading"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="applyLinePrefix('heading')"
+          @touchstart.prevent.stop="handleLineAction('heading')"
+          @click="handleLineAction('heading')"
         >
           #
         </button>
@@ -139,8 +147,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="list"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="applyLinePrefix('list')"
+          @touchstart.prevent.stop="handleLineAction('list')"
+          @click="handleLineAction('list')"
         >
           -
         </button>
@@ -149,8 +157,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="quote"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="applyLinePrefix('quote')"
+          @touchstart.prevent.stop="handleLineAction('quote')"
+          @click="handleLineAction('quote')"
         >
           &gt;
         </button>
@@ -159,8 +167,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="bold"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="insertSnippet('****', 2)"
+          @touchstart.prevent.stop="handleSnippetAction('****', 2)"
+          @click="handleSnippetAction('****', 2)"
         >
           ****
         </button>
@@ -169,8 +177,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="strike"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="insertSnippet('~~~~', 2)"
+          @touchstart.prevent.stop="handleSnippetAction('~~~~', 2)"
+          @click="handleSnippetAction('~~~~', 2)"
         >
           ~~~~
         </button>
@@ -179,8 +187,8 @@ onBeforeUnmount(() => {
           class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm font-semibold shadow-sm"
           data-action="rule"
           @mousedown.prevent
-          @touchstart.prevent
-          @click="applyLinePrefix('rule')"
+          @touchstart.prevent.stop="handleLineAction('rule')"
+          @click="handleLineAction('rule')"
         >
           ---
         </button>
