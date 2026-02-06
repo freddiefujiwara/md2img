@@ -234,7 +234,7 @@ defineExpose(
   <div class="min-h-dvh bg-slate-50 text-slate-900">
     <header
       class="z-10 bg-white/90 backdrop-blur border-b border-slate-200 transition-all lg:sticky lg:top-0"
-      :class="isFocused ? 'relative' : 'sticky top-0'"
+      :class="isFocused ? 'hidden lg:block' : 'sticky top-0'"
     >
       <div class="max-w-6xl mx-auto px-3 py-2 flex flex-wrap gap-2 items-center">
         <div class="flex gap-2 flex-wrap">
@@ -308,7 +308,7 @@ defineExpose(
           @focus="isFocused = true"
           @blur="isFocused = false"
           class="w-full h-[45dvh] lg:h-[75dvh] p-4 font-mono text-sm outline-none resize-none bg-transparent transition-all"
-          :class="isFocused ? 'h-[60dvh] lg:h-[75dvh] pb-[30dvh] lg:pb-4' : ''"
+          :class="isFocused ? 'h-[80dvh] lg:h-[75dvh] pb-[40dvh] lg:pb-4' : ''"
         />
       </section>
 
@@ -346,7 +346,7 @@ defineExpose(
     <MarkdownToolbar :target-ref="markdownTextareaRef" />
 
     <!-- Mobile save button at the bottom. -->
-    <div class="lg:hidden fixed bottom-24 left-4 right-4 z-20">
+    <div class="lg:hidden fixed bottom-24 left-4 right-4 z-20" v-if="!isFocused">
       <button
         class="w-full py-4 rounded-2xl bg-emerald-600 text-white font-bold shadow-xl hover:bg-emerald-700 disabled:opacity-60 transition-all"
         :disabled="exporting"

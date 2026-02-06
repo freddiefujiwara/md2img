@@ -76,9 +76,11 @@ describe("EditorView", () => {
     // Focus
     await textarea.dispatchEvent(new Event("focus"));
     await nextTick();
-    expect(header.classList.contains("relative")).toBe(true);
+    expect(header.classList.contains("hidden")).toBe(true);
+    expect(header.classList.contains("lg:block")).toBe(true);
+    expect(container.querySelector(".fixed.bottom-24")).toBeNull();
     expect(spacer.classList.contains("h-96")).toBe(true);
-    expect(textarea.classList.contains("pb-[30dvh]")).toBe(true);
+    expect(textarea.classList.contains("pb-[40dvh]")).toBe(true);
 
     // Blur
     await textarea.dispatchEvent(new Event("blur"));
